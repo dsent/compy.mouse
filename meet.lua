@@ -14,10 +14,10 @@ cheese = {
   min_d = 0
 }
 
--- Screen diagonal in pixels
+-- Play-field diagonal in pixels (minus the reserved strip)
 
 function screen_diag()
-  local w, h = APP.width, APP.height
+  local w, h = APP.field_w, APP.height
   return math.sqrt(w * w + h * h)
 end
 
@@ -38,7 +38,7 @@ end
 
 function cheese_clear_margin(x, y, r)
   local m = APP.width * CHEESE.margin_frac
-  if x - r < m or APP.width - m < x + r then
+  if x - r < m or APP.field_w - m < x + r then
     return false
   end
   if y - r < m or APP.height - m < y + r then
@@ -88,7 +88,7 @@ end
 function cheese_sample()
   local r = cheese_radius()
   local m = APP.width * CHEESE.margin_frac + r
-  local x = rand_range(m, APP.width - m)
+  local x = rand_range(m, APP.field_w - m)
   local y = rand_range(m, APP.height - m)
   return x, y
 end
@@ -195,7 +195,7 @@ end
 function barrier_inset()
   local hx, hy = mm_half()
   local c = BARRIER.clearance
-  return APP.width - 4 * c * hx, APP.height - 4 * c * hy
+  return APP.field_w - 4 * c * hx, APP.height - 4 * c * hy
 end
 
 -- One box side: at least min_px and the area-floor share
@@ -242,7 +242,7 @@ end
 
 function barrier_center()
   local mx, my = barrier_margins()
-  return rand_range(mx, APP.width - mx),
+  return rand_range(mx, APP.field_w - mx),
        rand_range(my, APP.height - my)
 end
 
@@ -251,7 +251,7 @@ end
 
 function barrier_far_center(px, py)
   local mx, my = barrier_margins()
-  return pick_far(px, mx, APP.width - mx),
+  return pick_far(px, mx, APP.field_w - mx),
        pick_far(py, my, APP.height - my)
 end
 
@@ -421,12 +421,13 @@ end
 
 function sync_screen()
   APP.width, APP.height = love.graphics.getDimensions()
+  APP.field_w = APP.width - PLAY.reserve_r
 end
 
 -- Center the mouse and clear its motion / wheel state.
 
 function reset_mm_state()
-  mm.x = APP.width / 2
+  mm.x = APP.field_w / 2
   mm.y = APP.height / 2
   mm.tilt = 0
   mm.pause = 0
@@ -453,9 +454,15 @@ function meet.enter()
   reset_mm_timers()
   barrier_clear()
   cheese_respawn()
-  win_reset(MEET_GOAL)
+  win_reset("meet")
   love.mouse.setVisible(false)
   love.mouse.setRelativeMode(true)
+end
+
+-- Meet has no notch: a fresh level (a win-gauge loop) just
+-- resets the gauge (win.lua). The cheese hunt is untouched.
+
+function meet.relevel()
 end
 
 function meet.leave()
@@ -467,7 +474,7 @@ end
 
 function clamp_walls()
   local hx, hy = mm_half()
-  local nx = clamp(mm.x, hx, APP.width - hx)
+  local nx = clamp(mm.x, hx, APP.field_w - hx)
   local ny = clamp(mm.y, hy, APP.height - hy)
   local hit = (nx ~= mm.x) or (ny ~= mm.y)
   mm.x, mm.y = nx, ny
@@ -638,7 +645,7 @@ function on_cheese()
   mm.wink = DELIGHT.wink_time
   play_cheese()
   mm.cheese_count = mm.cheese_count + 1
-  win_score()
+  win_success()
   cheese_take()
   barrier_on_cheese(mm.cheese_count, mm.x, mm.y)
 end

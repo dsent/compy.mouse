@@ -21,7 +21,8 @@ SND = {
   click = "ping",
   bell = "win",
   pop = "chirp",
-  win = "win"
+  win = "win",
+  wow = "wow"
 }
 
 function play(name)
@@ -155,8 +156,11 @@ function radius_from_row(row, min_px)
   return d / 2
 end
 
+-- Placement samples inside the play rectangle: the field is
+-- APP.width minus the reserved right strip (APP.field_w).
+
 function random_field_point(m)
-  local x = rand_range(m, APP.width - m)
+  local x = rand_range(m, APP.field_w - m)
   local y = rand_range(m, APP.height - m)
   return x, y
 end
@@ -183,7 +187,7 @@ function far_point(cx, cy, need, m)
       return x, y
     end
   end
-  return pick_far(cx, m, APP.width - m),
+  return pick_far(cx, m, APP.field_w - m),
        pick_far(cy, m, APP.height - m)
 end
 
@@ -211,9 +215,6 @@ end
 function open_game(name)
   GS.active = name
   GS.mode = "game"
-  if games[name].notched then
-    notch_enter(name)
-  end
   games[name].enter()
 end
 
@@ -222,13 +223,16 @@ function close_game()
   GS.active = nil
   GS.mode = "menu"
   WIN.won = false
+  WIN.fw = { }
 end
 
 function ensure_init()
   if GS.init then
-    return 
+    return
   end
-  gfx.setFont(gfx.newFont(FONT_SIZE))
+  UI_FONT = gfx.newFont(FONT_SIZE)
+  BIG_FONT = gfx.newFont(FONT_BIG)
+  gfx.setFont(UI_FONT)
   menu_init()
   GS.init = true
 end
@@ -284,15 +288,21 @@ function mouse_present()
   return GS.saw_mouse or not GS.saw_touch
 end
 
+-- The celebration freezes the game; the firework and the
+-- input lock still tick so the sparks animate and an
+-- in-flight click cannot skip the win.
+
 function update_active(dt)
-  if GS.mode == "game" then
-    if not WIN.won then
-      notch_tick_active(dt)
-      games[GS.active].update(dt)
-    end
-  else
+  if GS.mode ~= "game" then
     menu_update(dt)
+    return
   end
+  fw_update(dt)
+  WIN.lock = decay(WIN.lock, dt)
+  if WIN.won then
+    return
+  end
+  games[GS.active].update(dt)
 end
 
 function love.update(dt)
@@ -339,17 +349,26 @@ function draw_no_mouse()
   draw_caption(NO_MOUSE.text, w / 2, h / 2 + NO_MOUSE.text_dy)
 end
 
+-- The field, then either the celebration screen (won) or the
+-- play-time gauge and exit hint.
+
+function draw_game()
+  games[GS.active].draw()
+  if WIN.won then
+    draw_win_overlay()
+  else
+    draw_gauge()
+    draw_hints()
+  end
+end
+
 function love.draw()
   if not mouse_present() then
     draw_no_mouse()
-    return 
+    return
   end
   if GS.mode == "game" then
-    games[GS.active].draw()
-    draw_gauge(WIN.count, WIN.goal)
-    if WIN.won then
-      draw_win_overlay()
-    end
+    draw_game()
   else
     menu_draw()
   end
@@ -381,25 +400,40 @@ end
 
 function love.mousemoved(x, y, dx, dy, istouch)
   note_pointer(istouch)
+  if WIN.won then
+    return
+  end
   route_input("moved", dx, dy)
 end
+
+-- A click on the celebration advances (notch bump + fresh
+-- level, or a loop at the top); the lock ignores a click
+-- that lands in the first moments so the win registers.
 
 function love.mousepressed(x, y, button, istouch)
   note_pointer(istouch)
   if WIN.won then
-    close_game()
-    return 
+    if WIN.lock <= 0 then
+      win_advance()
+    end
+    return
   end
   route_input("pressed", button)
 end
 
 function love.mousereleased(x, y, button, istouch)
   note_pointer(istouch)
+  if WIN.won then
+    return
+  end
   route_input("released", button)
 end
 
 function love.wheelmoved(x, y)
   GS.saw_mouse = true
+  if WIN.won then
+    return
+  end
   route_input("wheel", y)
 end
 

@@ -317,44 +317,101 @@ function draw_plug_pair(cx, cy, s)
   gfx.pop()
 end
 
--- Win gauge: a centered row of `goal` pips; the first
--- `count` are filled, the rest outlined. Shared by all
--- three mini-games (main draws it over the field).
+-- Win gauge: a vertical thermometer in the right margin,
+-- filling bottom-up. The signed counter shows 0..goal, so a
+-- negative g reads as empty (no punitive drain).
 
-function draw_pip(x, y, r, filled)
-  if filled then
-    set_color(GAUGE.on)
-    gfx.circle("fill", x, y, r)
-  else
-    set_color(GAUGE.off)
-    gfx.setLineWidth(2)
-    gfx.circle("line", x, y, r)
+function gauge_frac()
+  if WIN.goal <= 0 then
+    return 0
+  end
+  return clamp(WIN.g / WIN.goal, 0, 1)
+end
+
+function draw_gauge()
+  local f = gauge_frac()
+  local x = APP.width - GAUGE.right - GAUGE.w
+  local y0 = GAUGE.pad
+  local h = APP.height - 2 * GAUGE.pad
+  set_color(GAUGE.track, GAUGE.track_a)
+  gfx.rectangle("fill", x, y0, GAUGE.w, h, GAUGE.radius)
+  set_color(GAUGE.on, GAUGE.fill_a)
+  gfx.rectangle("fill", x, y0 + h * (1 - f),
+    GAUGE.w, h * f, GAUGE.radius)
+end
+
+-- Centered text at (cx, y-top) in the current (UI) font
+
+function draw_center(text, cx, y, color)
+  local font = gfx.getFont()
+  local tw = font:getWidth(text)
+  set_color(color)
+  gfx.print(text, cx - tw / 2, y)
+end
+
+-- Centered heading in the big font, then restore the UI font
+
+function draw_big(text, cx, cy, color)
+  gfx.setFont(BIG_FONT)
+  local tw = BIG_FONT:getWidth(text)
+  set_color(color)
+  gfx.print(text, cx - tw / 2, cy - BIG_FONT:getHeight() / 2)
+  gfx.setFont(UI_FONT)
+end
+
+-- Firework spark: a soft halo around a bright core
+
+function fw_draw_spark(p)
+  local a = p.life / p.max
+  set_color(p.col, a * FW.halo_a)
+  gfx.circle("fill", p.x, p.y, FW.r_halo)
+  set_color(p.col, a)
+  gfx.circle("fill", p.x, p.y, FW.r_core)
+end
+
+function fw_draw()
+  for _, p in ipairs(WIN.fw) do
+    fw_draw_spark(p)
   end
 end
 
-function draw_gauge_row(count, goal, cx, cy, r, gap)
-  local x0 = cx - (goal - 1) * gap / 2
-  for i = 1, goal do
-    draw_pip(x0 + (i - 1) * gap, cy, r, i <= count)
-  end
-end
-
--- Small HUD gauge, top-center, during play
-
-function draw_gauge(count, goal)
-  draw_gauge_row(count, goal, APP.width / 2,
-    GAUGE.hud_y, GAUGE.pip_r, GAUGE.gap)
-end
-
--- Unified win overlay: dim the field, then the full gauge
--- large and centered. A tap (handled in main) returns to
--- the menu. Same for meet, find, and pop.
+-- Celebration screen: dim the field, a warm "Good job!", the
+-- firework (empty unless a top-notch win started it), and --
+-- only once the lock elapses -- the click-to-continue cue, so
+-- a stray click cannot skip the win. A click advances (main).
 
 function draw_win_overlay()
-  gfx.setColor(0, 0, 0, GAUGE.veil_a)
+  set_color(CELEB.veil, CELEB.veil_a)
   gfx.rectangle("fill", 0, 0, APP.width, APP.height)
-  local r = GAUGE.pip_r * GAUGE.win_scale
-  local gap = GAUGE.gap * GAUGE.win_scale
-  draw_gauge_row(WIN.goal, WIN.goal,
-    APP.width / 2, APP.height / 2, r, gap)
+  local cx = APP.width / 2
+  local cy = APP.height / 2
+  draw_big(CELEB.title, cx, cy + CELEB.title_dy, CELEB.title_c)
+  if WIN.lock <= 0 then
+    draw_center(CELEB.cue, cx, cy + CELEB.cue_dy, CELEB.cue_c)
+  end
+  fw_draw()
+end
+
+-- A dim chip behind light text at the bottom-left edge.
+
+function hint_y()
+  return APP.height - gfx.getFont():getHeight() - HINT.y_off
+end
+
+function draw_hint_chip(text)
+  local font = gfx.getFont()
+  local tw = font:getWidth(text)
+  local y = hint_y()
+  local x = 8
+  set_color(HINT.chip, HINT.chip_a)
+  gfx.rectangle("fill", x - HINT.pad, y - 3,
+    tw + HINT.pad * 2, font:getHeight() + 6, 5)
+  set_color(HINT.text_c)
+  gfx.print(text, x, y)
+end
+
+-- Persistent play-time hint: the Shift+Esc exit chip
+
+function draw_hints()
+  draw_hint_chip(HINT.back)
 end

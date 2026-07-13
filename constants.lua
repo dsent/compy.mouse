@@ -37,9 +37,11 @@ MENU = {
   line_h = 44
 }
 
--- Large sans-serif UI font for child-facing text
+-- Large sans-serif UI font for child-facing text; FONT_BIG
+-- is the celebration / help-peek heading size.
 
 FONT_SIZE = 28
+FONT_BIG = 56
 
 -- Calm overlay shown when focus or input is lost
 
@@ -267,20 +269,16 @@ BARRIER = {
   color = BARRIER_COLOR
 }
 
--- Difficulty-notch convention shared by skill-based
--- mini-games (find, pop). Meet opts out. Level range is
--- min..max; auto-match bumps up after up_streak clean
--- successes, down after down_streak struggles. Cooldown
--- gates auto-shifts only; teacher chords bypass it.
--- Streaks reset on any notch change. The level is the
--- only state that survives a mini-game exit and reenter.
+-- Difficulty-notch bounds shared by skill-based mini-games
+-- (find, pop). Meet opts out. The level ranges over min..max;
+-- the gauge (win.lua) climbs it on a fill and eases it on a
+-- miss streak, and the teacher chord moves it too. The level
+-- is the only state that survives a mini-game exit and
+-- reenter; it zeroes at program start.
 
 NOTCH = {
   min = -2,
-  max = 2,
-  up_streak = 3,
-  down_streak = 2,
-  cooldown = 15
+  max = 2
 }
 
 -- "Plug in the mouse" screen, shown program-wide when no
@@ -351,14 +349,14 @@ FIND_WARM = {
   0.16
 }
 
--- Timings (s) and geometry. clean_t / struggle_t are the
--- auto-match windows; warm_t the cool->warm transition;
--- fade_t the swap cross-fade; pulse the glow period;
--- edge_frac the no-edge-spawn inset (of screen width).
+-- Timings (s) and geometry. struggle_t is the ease-down
+-- window (a long spawn without an entry); warm_t the
+-- cool->warm transition; fade_t the swap cross-fade; pulse
+-- the glow period; edge_frac the no-edge-spawn inset (of
+-- screen width).
 
 FIND = {
   min_px = 60,
-  clean_t = 4,
   struggle_t = 12,
   warm_t = 0.3,
   fade_t = 0.3,
@@ -476,8 +474,7 @@ POP_HI = {
 -- Timings (s) and tuning. pop_t: shrink-to-zero; grow_t:
 -- grow-in; struggle_t: no-pop struggle window;
 -- struggle_clicks: off-target clicks that trigger a
--- struggle; forgive: off-target clicks still counted
--- clean.
+-- struggle (ease the gauge).
 
 POP = {
   min_px = 60,
@@ -485,7 +482,6 @@ POP = {
   grow_t = 0.3,
   struggle_t = 15,
   struggle_clicks = 3,
-  forgive = 1,
   rim_w = 3,
   fill_a = 0.35,
   hi_a = 0.85,
@@ -497,21 +493,6 @@ POP = {
 -- animation smoothing only, not a level knob. Tunable.
 
 POP_RESPAWN = 0.4
-
--- Teacher speed axis for pop: a multiplier on the bubble
--- drift (motion), separate from the progression notch
--- (streaks climb that). Larger = faster drift. The chord
--- steps it; it holds while the program runs. Index into
--- POP_SPD_MULT, default normal (2).
-
-POP_SPD_MULT = {
-  0.7,
-  1,
-  1.4
-}
-POP_SPD_LO = 1
-POP_SPD_HI = 3
-POP_SPD_DEF = 2
 
 -- Per-notch table. size: bubble diameter as a screen-
 -- width fraction; reloc: min center move as a width
@@ -563,29 +544,164 @@ BURST = {
   min_speed_frac = 0.5
 }
 
--- Win gauge: a row of pips, one per required success,
--- filled as the child progresses. Shown small during
--- play and enlarged on the win overlay. on/off are the
--- filled and empty pip colors.
+-- Win gauge: a vertical thermometer in the right margin,
+-- filling bottom-up with the signed counter g (0..goal). A
+-- gold fill on a dim track reads on both the dark find field
+-- and the light pop field.
 
-GAUGE_OFF = {
-  0.7,
-  0.7,
-  0.72
+GAUGE_TRACK = {
+  0.5,
+  0.5,
+  0.55
+}
+
+-- A reserved strip down the right edge holds the gauge: the
+-- pointer is kept out of it and nothing spawns there. All
+-- horizontal placement clamps to APP.field_w, set in
+-- sync_screen to APP.width - PLAY.reserve_r.
+
+PLAY = {
+  reserve_r = 30
 }
 
 GAUGE = {
-  pip_r = 10,
-  gap = 28,
-  hud_y = 30,
-  win_scale = 2.4,
-  veil_a = 0.45,
+  w = 8,
+  right = 11,
+  pad = 44,
+  radius = 4,
+  track_a = 0.2,
+  fill_a = 0.85,
   on = LEGO_CHEESE,
-  off = GAUGE_OFF
+  track = GAUGE_TRACK
 }
 
--- Successes to fill each mini-game's gauge. Tunable.
+-- First-try successes that fill each mini-game's gauge (its
+-- promote threshold). Tunable.
 
-MEET_GOAL = 8
-FIND_GOAL = 8
-POP_GOAL = 8
+GAUGE_GOAL = {
+  meet = 8,
+  find = 6,
+  pop = 6
+}
+
+-- The signed counter floors at GAUGE_DEMOTE; reaching it
+-- above the floor notch eases the notch down. After an
+-- ease-down the fresh level seeds g at GAUGE_HEAD of its goal
+-- (a head start), matching Hunt.
+
+GAUGE_DEMOTE = -3
+GAUGE_HEAD = 2 / 3
+
+-- Celebration screen: a dim veil, a warm "Good job!", and a
+-- click-to-continue cue that appears only once lock elapses.
+-- lock ignores an in-flight click (>= 0.75 s) so a stray
+-- click cannot skip the win before the child sees it.
+
+CELEB_VEIL = {
+  0,
+  0,
+  0
+}
+CELEB_TITLE_C = {
+  1,
+  0.85,
+  0.35
+}
+CELEB_CUE_C = {
+  0.9,
+  0.9,
+  0.92
+}
+
+CELEB = {
+  veil = CELEB_VEIL,
+  veil_a = 0.5,
+  lock = 0.9,
+  title = "Good job!",
+  title_dy = -46,
+  cue = "Click to continue",
+  cue_dy = 26,
+  title_c = CELEB_TITLE_C,
+  cue_c = CELEB_CUE_C
+}
+
+-- In-play hint (keyboard parity): a dim Shift+Esc exit chip
+-- bottom-left, a dark chip behind light text so it stays
+-- legible on both the dark find and light pop fields.
+
+HINT_CHIP = {
+  0.1,
+  0.1,
+  0.12
+}
+HINT_TEXT_C = {
+  0.85,
+  0.85,
+  0.88
+}
+
+HINT = {
+  back = "Shift+Esc: menu",
+  chip = HINT_CHIP,
+  chip_a = 0.5,
+  text_c = HINT_TEXT_C,
+  pad = 6,
+  y_off = 8
+}
+
+-- Celebration firework: saturated sparks, no red, for
+-- contrast over the light "Good job!" veil. One color per
+-- sub-global so no chunk runs long.
+
+FW_BLUE = {
+  0.15,
+  0.55,
+  0.95
+}
+FW_CYAN = {
+  0.1,
+  0.72,
+  0.78
+}
+FW_GREEN = {
+  0.2,
+  0.72,
+  0.35
+}
+FW_VIOLET = {
+  0.6,
+  0.3,
+  0.9
+}
+FW_GOLD = {
+  0.95,
+  0.62,
+  0.12
+}
+FW_MAGENTA = {
+  0.85,
+  0.28,
+  0.82
+}
+
+FW_COLORS = {
+  FW_BLUE,
+  FW_CYAN,
+  FW_GREEN,
+  FW_VIOLET,
+  FW_GOLD,
+  FW_MAGENTA
+}
+
+FW = {
+  count = 22,
+  speed_lo = 140,
+  speed_span = 220,
+  life_lo = 1.4,
+  life_span = 1,
+  rise = 120,
+  grav = 180,
+  r_halo = 7,
+  r_core = 4,
+  halo_a = 0.35
+}

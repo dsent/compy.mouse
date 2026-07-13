@@ -4,8 +4,9 @@
 -- the visible pointer into it (no clicking). On entry the
 -- target warms and a bell plays; after the notch's spawn
 -- pause it cross-fades to a new target elsewhere, at least
--- the relocation distance away. Difficulty rides the
--- shared notch mechanism (notch_level / notch_report).
+-- the relocation distance away. Each find fills the shared
+-- gauge (win.lua); a struggle eases it. The gauge climbs and
+-- eases the notch.
 
 require("pointer")
 
@@ -65,11 +66,18 @@ function find.enter()
   sync_screen()
   cursor_custom()
   fc.px, fc.py = love.mouse.getPosition()
+  find.relevel()
+  win_reset("find")
+end
+
+-- Respawn a fresh target at the current notch (a new level).
+-- The gauge is set by win.lua; the pointer is untouched.
+
+function find.relevel()
   local row = find_row()
   local r = find_radius(row)
   local x, y = find_sample(r, row.edge)
   find_spawn(x, y, r)
-  win_reset(FIND_GOAL)
 end
 
 function find.leave()
@@ -83,28 +91,17 @@ function find_inside()
   return dx * dx + dy * dy <= fc.r * fc.r
 end
 
--- Score the spawn on entry: clean within the window, else
--- neutral (unless a struggle already fired this spawn).
-
-function find_resolve()
-  if fc.age <= FIND.clean_t then
-    notch_report("find", "clean")
-  elseif not fc.struggled then
-    notch_report("find", "neutral")
-  end
-end
-
--- Pointer entered: warm up, score it, play the bell
+-- Pointer entered: warm up, fill the gauge, play the bell
 
 function find_enter_circle()
   fc.phase = "won"
   fc.won_t = 0
-  find_resolve()
   play(SND.bell)
-  win_score()
+  win_success()
 end
 
--- Live: age the target, detect entry, fire struggle once
+-- Live: age the target, detect entry, fire one struggle. A
+-- struggle eases the gauge (a long spawn without an entry).
 
 function find_live(dt)
   fc.age = fc.age + dt
@@ -112,7 +109,7 @@ function find_live(dt)
     find_enter_circle()
   elseif not fc.struggled and FIND.struggle_t <= fc.age then
     fc.struggled = true
-    notch_report("find", "struggle")
+    win_miss()
   end
 end
 
@@ -158,6 +155,7 @@ PHASE = {
 
 function find.update(dt)
   fc.px, fc.py = love.mouse.getPosition()
+  fc.px = clamp(fc.px, 0, APP.field_w)
   PHASE[fc.phase](dt)
 end
 

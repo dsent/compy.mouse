@@ -11,11 +11,6 @@ require("pointer")
 
 pop = { notched = true }
 
--- Teacher speed level: index into POP_SPD_MULT, moved by
--- the chord. File-scope so it holds across re-entry and
--- resets to the default only on program restart.
-POP_SPD = POP_SPD_DEF
-
 -- Bubble and run state. Reset fully on enter.
 -- phase: "grow" | "live" | "pop". off: off-target clicks
 -- this spawn. scale: current visual scale. pop_s0: scale
@@ -45,18 +40,8 @@ end
 
 -- Drift velocity for the notch (zero unless motion > 0)
 
-function pop_speed_mult()
-  return POP_SPD_MULT[POP_SPD]
-end
-
--- Teacher chord: step the drift-speed axis, not the notch
-
-function pop_speed_shift(dir)
-  POP_SPD = clamp(POP_SPD + dir, POP_SPD_LO, POP_SPD_HI)
-end
-
 function pop_set_drift()
-  local m = pop_row().motion * pop_speed_mult()
+  local m = pop_row().motion
   if m <= 0 then
     bubble.vx, bubble.vy = 0, 0
     return 
@@ -83,10 +68,16 @@ function pop.enter()
   cursor_custom()
   bubble.px, bubble.py = love.mouse.getPosition()
   bubble.burst = { }
+  pop.relevel()
+  win_reset("pop")
+end
+
+-- Respawn a fresh bubble at the current notch (a new level).
+
+function pop.relevel()
   local r = pop_radius(pop_row())
   local x, y = pop_sample(r)
   pop_begin(x, y, r)
-  win_reset(POP_GOAL)
 end
 
 function pop.leave()
@@ -103,20 +94,6 @@ function pop_inside()
   local r = bubble.r * bubble.scale
   local dx, dy = bubble.px - bubble.x, bubble.py - bubble.y
   return dx * dx + dy * dy <= r * r
-end
-
--- Score on pop: clean if off-target clicks were forgiven,
--- neutral otherwise. A struggle already counted stands.
-
-function pop_resolve()
-  if bubble.struggled then
-    return 
-  end
-  if bubble.off <= POP.forgive then
-    notch_report("pop", "clean")
-  else
-    notch_report("pop", "neutral")
-  end
 end
 
 -- Particle burst scattering from the bubble center
@@ -145,8 +122,7 @@ end
 -- shrink out and queue the next bubble's position.
 
 function pop_hit()
-  pop_resolve()
-  win_score()
+  win_success()
   play(SND.pop)
   pop_spawn_burst()
   local row = pop_row()
@@ -166,7 +142,7 @@ function pop_miss()
        and POP.struggle_clicks <= bubble.off
   then
     bubble.struggled = true
-    notch_report("pop", "struggle")
+    win_miss()
   end
 end
 
@@ -189,9 +165,9 @@ end
 
 function pop_reflect()
   local r = bubble.r
-  if bubble.x < r or APP.width - r < bubble.x then
+  if bubble.x < r or APP.field_w - r < bubble.x then
     bubble.vx = -bubble.vx
-    bubble.x = clamp(bubble.x, r, APP.width - r)
+    bubble.x = clamp(bubble.x, r, APP.field_w - r)
   end
   if bubble.y < r or APP.height - r < bubble.y then
     bubble.vy = -bubble.vy
@@ -217,7 +193,7 @@ function pop_live(dt)
        and POP.struggle_t <= bubble.age
   then
     bubble.struggled = true
-    notch_report("pop", "struggle")
+    win_miss()
   end
 end
 
@@ -259,12 +235,12 @@ end
 
 function pop.update(dt)
   bubble.px, bubble.py = love.mouse.getPosition()
+  bubble.px = clamp(bubble.px, 0, APP.field_w)
   POP_PHASE[bubble.phase](dt)
   pop_update_burst(dt)
 end
 
 pop.pressed = pop_pressed
-pop.teacher = pop_speed_shift
 
 -- Drawing
 
