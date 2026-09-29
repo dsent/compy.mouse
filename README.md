@@ -7,7 +7,7 @@ tables, no defensive code, SVG2LÖVE sprites.
 
 This build implements the menu, the shared infrastructure
 (difficulty notches + teacher chords, the no-mouse screen,
-the `Shift+Esc` / raw-`Esc` / `Ctrl+Esc` key rules), and all
+the `Shift+Esc` / `Ctrl+Esc` key rules), and all
 three mini-games — **Meet the mouse**, **Find the glowing
 circle**, and **Pop the bubble** — in full. The menu lists
 only built games.
@@ -69,8 +69,8 @@ only built games.
   orientation, and length sampled once per session. Placement
   keeps the rotated bounding box inside the playfield with a 2%
   margin (the center is inset by the bbox half-extent).
-- Right-click arrives as raw `Esc` (Android) and lights the
-  right button; `Shift+Esc` is back-to-menu; `Ctrl+Esc` unbound.
+- The right button lights while it is held; plain `Esc` does
+  nothing; `Shift+Esc` is back-to-menu; `Ctrl+Esc` unbound.
 
 ## Shared infrastructure
 
@@ -101,7 +101,7 @@ only built games.
 - One target at a time on a dark field; size, spawn pause,
   relocation distance, and edge-spawn come from the notch
   table (`FIND_NOTCH`), with the circle never below 60 px.
-- Movement is the only input (clicks/wheel/raw-Esc ignored).
+- Movement is the only input (clicks, wheel and Esc ignored).
   The pointer position is read each frame from the OS; entry
   is a point-in-circle test against it.
 - On entry the target cross-fades cool->warm over 0.3 s and a
@@ -193,9 +193,8 @@ A mini-game is a table registered in `games` with an entry in
 - `update(dt)` / `draw()`
 - optional input methods, dispatched generically by main and
   called only if present: `moved(dx, dy)`, `pressed(button)`,
-  `released(button)`, `wheel(dy)`, `right()` (raw-Esc /
-  right-click). A game implements only what it needs; other
-  events are ignored.
+  `released(button)`, `wheel(dy)`. A game implements only
+  what it needs; other events are ignored.
 
 A new mini-game: write its file with this contract, add a
 line to `GAMES` and `games`. No changes to main's callbacks.

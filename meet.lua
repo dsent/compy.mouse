@@ -409,7 +409,6 @@ function reset_mm_timers()
   mm.delight = 0
   mm.wink = 0
   mm.cheese_echo = 0
-  mm.right_flash = 0
   mm.hit_snd = 0
   mm.step_acc = 0
   mm.speed = 0
@@ -557,14 +556,10 @@ GLOW_ZONES = {
   "wheel"
 }
 
--- Target glow for a zone: lit while held, and the right
--- zone also lights briefly on a raw-Esc right-click.
+-- Target glow for a zone: lit while held.
 
 function glow_target(zone)
   if mm.btn[zone] then
-    return 1
-  end
-  if zone == "right" and 0 < mm.right_flash then
     return 1
   end
   return 0
@@ -614,7 +609,6 @@ end
 function update_timers(dt)
   mm.bump = decay(mm.bump, dt)
   mm.hit_snd = decay(mm.hit_snd, dt)
-  mm.right_flash = decay(mm.right_flash, dt)
   mm.speed = mm.speed * MOUSE_TUNE.speed_decay
 end
 
@@ -694,9 +688,6 @@ function meet_pressed(button)
   local zone = BTN_OF[button]
   if zone then
     mm.btn[zone] = true
-    if zone == "right" then
-      mm.right_flash = BUMP.right_flash
-    end
     play(SND.click)
   end
 end
@@ -706,13 +697,6 @@ function meet_released(button)
   if zone then
     mm.btn[zone] = false
   end
-end
-
--- Right-click arrives as raw Esc 
-
-function meet_right()
-  mm.right_flash = BUMP.right_flash
-  play(SND.click)
 end
 
 function meet_wheel(dy)
@@ -727,7 +711,6 @@ meet.moved = meet_moved
 meet.pressed = meet_pressed
 meet.released = meet_released
 meet.wheel = meet_wheel
-meet.right = meet_right
 
 function meet.draw()
   gfx.clear(MOUSE_BG)

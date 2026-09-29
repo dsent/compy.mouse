@@ -133,14 +133,11 @@ MOUSE_TUNE = {
   press_shift = 4
 }
 
--- Wall/barrier bump response. right_flash: how long the
--- right zone lights after a raw-Esc right-click, which
--- has no matching release event.
+-- Wall/barrier bump response.
 
 BUMP = {
   time = 0.12,
-  recoil = 6,
-  right_flash = 0.3
+  recoil = 6
 }
 
 -- Button press glow: rate eases mm.glow toward the
