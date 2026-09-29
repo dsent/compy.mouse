@@ -688,6 +688,8 @@ function meet_pressed(button)
   local zone = BTN_OF[button]
   if zone then
     mm.btn[zone] = true
+    -- lit at once, so a click shorter than a frame still shows
+    mm.glow[zone] = 1
     play(SND.click)
   end
 end
