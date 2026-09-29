@@ -694,10 +694,16 @@ function meet_pressed(button)
   end
 end
 
+-- During the celebration update does not run to fade the
+-- glow, so a release there puts the zone out at once.
+
 function meet_released(button)
   local zone = BTN_OF[button]
   if zone then
     mm.btn[zone] = false
+    if WIN.won then
+      mm.glow[zone] = 0
+    end
   end
 end
 
