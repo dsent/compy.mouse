@@ -72,8 +72,8 @@ function draw_zone(layer, zone)
 end
 
 -- Pressed look: shift down, fill the zone color, then an
--- additive pass for a soft glow. Both scale with the
--- eased press amount, so button-up fades to neutral.
+-- additive pass for a soft glow. Both scale with the press
+-- amount, full at the press, so button-up fades to neutral.
 
 function draw_press(layer, zone)
   local a = mm.glow[zone]

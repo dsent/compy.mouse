@@ -140,9 +140,10 @@ BUMP = {
   recoil = 6
 }
 
--- Button press glow: rate eases mm.glow toward the
--- pressed state; add is the additive glow strength;
--- eps is the alpha below which the zone is skipped.
+-- Button press glow: a press sets mm.glow full, and rate
+-- eases it back after the release; add is the additive
+-- glow strength; eps is the alpha below which the zone is
+-- skipped.
 
 GLOW = {
   rate = 12,

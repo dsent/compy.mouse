@@ -421,11 +421,11 @@ function love.mousepressed(x, y, button, istouch)
   route_input("pressed", button)
 end
 
+-- A release reaches the game even during the celebration,
+-- so a button held through a win does not stay lit after it.
+
 function love.mousereleased(x, y, button, istouch)
   note_pointer(istouch)
-  if WIN.won then
-    return
-  end
   route_input("released", button)
 end
 

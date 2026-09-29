@@ -52,7 +52,7 @@ only built games.
   body tilts up to 8° toward travel; a soft shadow sits under
   the mouse (flat, so a bump lift reads against it).
 - Buttons: left/right/wheel-click light in per-button LEGO
-  colors with a soft additive glow that eases in on press and
+  colors with a soft additive glow, full at the press, that
   fades back on release. The base logo is a monochrome gray
   mark and turns colorful (the winking brand mark) during the
   cheese delight.
