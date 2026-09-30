@@ -202,8 +202,9 @@ function cursor_show()
   love.mouse.setVisible(true)
 end
 
--- Restore the system cursor and leave relative mode, for
--- both a normal game exit and any quit path.
+-- Restore the system cursor and leave relative mode: on a
+-- return to the menu (meet.leave), and from love.quit under
+-- stock LÖVE. Under the IDE only meet.leave reaches it.
 
 function cursor_release()
   love.mouse.setRelativeMode(false)
