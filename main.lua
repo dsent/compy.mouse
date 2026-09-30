@@ -264,7 +264,7 @@ function love.focus(f)
 end
 
 -- Any exit restores the cursor, so quitting mid-game
--- (e.g. Ctrl+Esc) never leaves it hidden or captured.
+-- never leaves it hidden or captured.
 
 function love.quit()
   cursor_release()
@@ -438,14 +438,10 @@ function love.wheelmoved(x, y)
 end
 
 -- Shift+Esc is the back-to-menu chord; plain Esc does
--- nothing. Ctrl+Esc is compy's reset; it does not fire
--- love.quit, so the keypress is our only hook -- release
--- the cursor here so it survives the reset.
+-- nothing.
 
 function handle_escape()
-  if ctrl_down() then
-    cursor_release()
-  elseif shift_down() then
+  if shift_down() then
     close_game()
   end
 end
