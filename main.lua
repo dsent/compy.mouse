@@ -263,8 +263,9 @@ function love.focus(f)
   GS.focused = f
 end
 
--- Any exit restores the cursor, so quitting mid-game
--- never leaves it hidden or captured.
+-- Under stock LÖVE a quit restores the cursor. The IDE
+-- never calls a project's love.quit; it resets the mouse
+-- itself whenever the program stops.
 
 function love.quit()
   cursor_release()

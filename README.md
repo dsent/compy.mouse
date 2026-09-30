@@ -7,7 +7,7 @@ tables, no defensive code, SVG2LÖVE sprites.
 
 This build implements the menu, the shared infrastructure
 (difficulty notches + teacher chords, the no-mouse screen,
-the `Shift+Esc` / `Ctrl+Esc` key rules), and all
+the `Shift+Esc` key rule), and all
 three mini-games — **Meet the mouse**, **Find the glowing
 circle**, and **Pop the bubble** — in full. The menu lists
 only built games.
