@@ -623,7 +623,7 @@ CELEB = {
   cue_c = CELEB_CUE_C
 }
 
--- In-play hint (keyboard parity): a dim Shift+Esc exit chip
+-- In-play hint (keyboard parity): a dim Esc exit chip
 -- bottom-left, a dark chip behind light text so it stays
 -- legible on both the dark find and light pop fields.
 
@@ -639,7 +639,7 @@ HINT_TEXT_C = {
 }
 
 HINT = {
-  back = "Shift+Esc: menu",
+  back = "Esc: menu",
   chip = HINT_CHIP,
   chip_a = 0.5,
   text_c = HINT_TEXT_C,
