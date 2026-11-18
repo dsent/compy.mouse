@@ -45,7 +45,8 @@ only built games.
 ## How it maps to the spec
 
 - Menu: digits launch built games only; `Esc` in a game
-  returns here, and at the menu does nothing.
+  returns here, and at the menu leaves the program for the
+  console. `Ctrl+Q` leaves at once from anywhere.
 - Playfield: a quiet light field; the light mouse reads
   clearly. The body outline is baked near-black.
 - Mouse follows pointer delta with light smoothing; system
