@@ -439,13 +439,20 @@ function love.wheelmoved(x, y)
   route_input("wheel", y)
 end
 
--- Esc alone goes back to the menu; a chord with Esc is no
--- command of the game.
+-- Esc alone steps back one level: a game goes back to the
+-- menu, and the menu, the top level, leaves the program for
+-- the console, as Ctrl+Q does from anywhere. A chord with Esc
+-- is no command of the game.
 
 function handle_escape()
   local chord = shift_down() or ctrl_down() or alt_down()
-  if not chord then
+  if chord then
+    return 
+  end
+  if GS.mode == "game" then
     close_game()
+  else
+    stop()
   end
 end
 
@@ -460,21 +467,16 @@ function handle_notch_chord(k)
   notch_teacher(k == "up" and 1 or -1)
 end
 
-function key_escape()
-  if GS.mode == "game" then
-    handle_escape()
-  end
-end
-
 -- Esc acts on its press alone: a held Esc, one left from an
--- ignored chord included, repeats without acting.
+-- ignored chord included, repeats without acting, so a held
+-- Esc that brought a game back to the menu stays there.
 
 function love.keypressed(k, _, isrepeat)
   if k == "up" or k == "down" then
     handle_notch_chord(k)
   elseif k == "escape" then
     if not isrepeat then
-      key_escape()
+      handle_escape()
     end
   elseif GS.mode == "menu" then
     menu_key(k)
