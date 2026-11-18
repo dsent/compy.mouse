@@ -439,11 +439,12 @@ function love.wheelmoved(x, y)
   route_input("wheel", y)
 end
 
--- Shift+Esc is the back-to-menu chord; plain Esc does
--- nothing.
+-- Esc alone goes back to the menu; a chord with Esc is no
+-- command of the game.
 
 function handle_escape()
-  if shift_down() then
+  local chord = shift_down() or ctrl_down() or alt_down()
+  if not chord then
     close_game()
   end
 end
@@ -465,11 +466,16 @@ function key_escape()
   end
 end
 
-function love.keypressed(k)
+-- Esc acts on its press alone: a held Esc, one left from an
+-- ignored chord included, repeats without acting.
+
+function love.keypressed(k, _, isrepeat)
   if k == "up" or k == "down" then
     handle_notch_chord(k)
   elseif k == "escape" then
-    key_escape()
+    if not isrepeat then
+      key_escape()
+    end
   elseif GS.mode == "menu" then
     menu_key(k)
   end

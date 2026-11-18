@@ -410,7 +410,7 @@ function draw_hint_chip(text)
   gfx.print(text, x, y)
 end
 
--- Persistent play-time hint: the Shift+Esc exit chip
+-- Persistent play-time hint: the Esc exit chip
 
 function draw_hints()
   draw_hint_chip(HINT.back)
